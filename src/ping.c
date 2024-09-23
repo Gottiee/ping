@@ -8,11 +8,6 @@ int socket_creation()
     return sockfd;
 }
 
-struct icmp_header *create_struct(char *buffer)
-{
-    struct 
-}
-
 int main(int argc, char **argv)
 {
     (void)argc;
@@ -20,6 +15,8 @@ int main(int argc, char **argv)
     int sockfd = socket_creation();
     if (sockfd == -1)
         fatal_perror("Fatal error");
-    char buffer[1024];
-    create_struct((char *)buffer);
+    struct icmphdr hdr;
+    (void)hdr;
 }
+
+https://www.geeksforgeeks.org/ping-in-c/

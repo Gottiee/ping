@@ -2,14 +2,20 @@
 #define PING
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <netdb.h>
-#include <netinet/in.h> 
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <netinet/ip_icmp.h>
+#include <time.h>
+#include <fcntl.h>
+#include <signal.h>
+
+#define PING_PKT_S 64
 
 /* error.c */
 void fatal_perror(char *error);
