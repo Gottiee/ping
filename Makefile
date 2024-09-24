@@ -18,7 +18,8 @@ SAN			= -fsanitize=address
 
 SRC_FILES = ping \
 error \
-parameters
+parameters \
+signal
 
 C_FILES		=	$(addsuffix .c, $(SRC_FILES))
 SRCS		=	$(addprefix $(SRC_DIR), $(C_FILES))
