@@ -1,6 +1,7 @@
 #ifndef PING
 #define PING
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>

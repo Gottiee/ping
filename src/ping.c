@@ -18,24 +18,27 @@ unsigned short checksum(void *b, int len)
     return result;
 }
 
-char *dns_lookup(char *domain, char *ip, struct sockaddr_in *addr_con)
+bool dns_lookup(char *domain, char *ip, struct sockaddr_in *addr_con)
 {
+    int value;
+
     printf("\nResolving DNS...\n");
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-    if ((getaddrinfo(domain, NULL, &hints, &res)) != 0)
+    if ((value = getaddrinfo(domain, NULL, &hints, &res)) != 0)
     {
         freeaddrinfo(res);
-        return NULL;
+        free(ip);
+        return false;
     }
     addr_con->sin_family = AF_INET;
     addr_con->sin_port = htons(0);
     addr_con->sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
     strcpy(ip, inet_ntoa(addr_con->sin_addr));
     freeaddrinfo(res);
-    return ip;
+    return true;
 }
 
 char *fill_sockaddr_in(struct sockaddr_in *addr_con, char *input) 
@@ -52,12 +55,11 @@ char *fill_sockaddr_in(struct sockaddr_in *addr_con, char *input)
     // tcheck si c'est une address ipv4
     if (inet_pton(AF_INET, input, &(addr_con->sin_addr)) == 1) {
         addr_con->sin_family = AF_INET;
-        addr_con->sin_port = htons(0);  // port ?
+        addr_con->sin_port = htons(0);
         strncpy(ip, input, 1024);
         return ip;
     }
-    dns_lookup(input, ip, addr_con);
-    if (!ip)
+    if (!dns_lookup(input, ip, addr_con))
         fatal_error("Host name not knows");
     return ip;
 }
@@ -70,19 +72,8 @@ int socket_creation()
     return sockfd;
 }
 
-void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
+void setup_socket(int sockfd, t_info info)
 {
-    int flag, msg_count = 0;
-    socklen_t addr_len;
-    long unsigned i;
-    char rbuffer[128];
-    t_ping_pkt pckt;
-
-    struct sockaddr_in r_addr;
-
-    // struct timespec time_start, time_end, tfs, tfe;
-    // long double rtt_msec = 0, total_msec = 0;
-
     struct timeval tv_out;
     tv_out.tv_sec = RECV_TIMEOUT;
     tv_out.tv_usec = 0;
@@ -91,43 +82,61 @@ void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
         fatal_perror("Error: setup ttl to socket");
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out)) != 0)
         fatal_perror("Error: setup timeout socket");
-    
+}
+
+void send_ping(int sockfd, t_ping_pkt *pckt, struct sockaddr_in *ping_addr)
+{
+    if (sendto(sockfd, pckt, sizeof(t_ping_pkt), 0, (struct sockaddr *)ping_addr, sizeof(*ping_addr)) <= 0 )
+        fatal_perror("Packet Sending Failed");
+}
+
+void receive_ping(int sockfd)
+{
+    char rbuffer[128];
+
+    if (recvfrom(sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL) <= 0 /*&& *msg_count > 1 */)
+        printf("packet receive failed\n");
+    else
+    {
+        struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
+        if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
+            printf("Error... Packet received with ICMP type %d code %d\n", recv_hdr->type, recv_hdr->code);
+        else
+            printf("packet receive\n");
+    }
+}
+
+void fill_icmp(t_ping_pkt *pckt, int *msg_count)
+{
+    long unsigned int i;
+
+    bzero(pckt, sizeof(t_ping_pkt));
+    pckt->hdr.type = ICMP_ECHO;
+    pckt->hdr.un.echo.id = getpid();
+    for (i = 0; i < sizeof(pckt->msg) - 1; i++)
+        pckt->msg[i] = i + '0';
+    pckt->msg[i] = 0;
+    pckt->hdr.un.echo.sequence = htons(*msg_count);
+    *msg_count = *msg_count + 1;
+    pckt->hdr.checksum = checksum(pckt,sizeof((*pckt)));
+}
+
+void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
+{
+    t_ping_pkt pckt;
+    int msg_count = 1;
+
+    // struct timespec time_start, time_end, tfs, tfe;
+    // long double rtt_msec = 0, total_msec = 0;
+
+    setup_socket(sockfd, info);
+
     while (nbr_loop)
     {
-        flag = 1;
-        bzero(&pckt, sizeof(pckt));
-        pckt.hdr.type = ICMP_ECHO;
-        pckt.hdr.un.echo.id = getpid();
-        for (i = 0; i < sizeof(pckt.msg) - 1; i++)
-            pckt.msg[i] = i + '0';
-        pckt.msg[i] = 0;
-        pckt.hdr.un.echo.sequence = htons(msg_count++);
-        pckt.hdr.checksum = checksum(&pckt,sizeof(pckt));
-
+        fill_icmp(&pckt, &msg_count);
         usleep(info.sleep_rate);
-
-        //send packet
-        if (sendto(sockfd, &pckt, sizeof(pckt), 0, (struct sockaddr *)ping_addr, sizeof(*ping_addr)) <= 0 )
-        {
-            printf("\nPacket Sending Failed\n");
-            flag = 0;
-        }
-
-        // receive packet
-        addr_len = sizeof(r_addr);
-        if (recvfrom(sockfd, rbuffer, sizeof(rbuffer), 0, (struct sockaddr *)&r_addr, &addr_len) <= 0 && msg_count > 1)
-            printf("packet receive failed\n");
-        else
-        {
-            printf("response receive\n");
-            if (!flag)
-                continue;
-            struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
-            if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
-                printf("Error... Packet received with ICMP type %1$d:%1$x code %2$d:%2$x\n", recv_hdr->type, recv_hdr->code);
-            else
-                printf("packet receive");
-        }
+        send_ping(sockfd, &pckt, ping_addr);
+        receive_ping(sockfd);
     }
     printf("fin de la boucle\n");
 }

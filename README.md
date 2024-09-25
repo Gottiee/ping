@@ -14,3 +14,7 @@ sudo valgrind --leak-check=full  --show-leak-kinds=all ./ft_ping google.com
 # suppression of leak bug
 sudo valgrind  --suppressions=dlopen.supp ./ft_ping google.com
 ```
+
+### TODO
+
+- [ ] gerer le ping 127.0.0.1
