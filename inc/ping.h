@@ -16,7 +16,7 @@
 #include <fcntl.h>
 #include <signal.h>
 
-extern int pingloop;
+extern int nbr_loop;
 
 #define PING_PKT_S 64
 #define RECV_TIMEOUT 1 // timeout for receving packet (in seconds)
@@ -33,6 +33,9 @@ typedef struct s_info
     int ttl;
     int sleep_rate;
 } t_info;
+
+/* signal.c */
+void loop_handler(int foo);
 
 /* error.c */
 void fatal_perror(char *error);

@@ -155,6 +155,7 @@ int main(int argc, char **argv)
     ip_addr = fill_sockaddr_in(&addr_con, argv[1]);
 
     t_info info = manage_args(argv);
+    signal(SIGINT, loop_handler);
     ping_loop(sockfd, info, &addr_con);
     printf("ip : %s\n", ip_addr);
     free(ip_addr);
