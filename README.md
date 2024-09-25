@@ -18,3 +18,5 @@ sudo valgrind  --suppressions=dlopen.supp ./ft_ping google.com
 ### TODO
 
 - [ ] gerer le ping 127.0.0.1
+
+https://www.geeksforgeeks.org/ping-in-c/
