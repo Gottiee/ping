@@ -75,10 +75,8 @@ void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
     int flag, msg_count = 0;
     socklen_t addr_len;
     long unsigned i;
-    char rbuffer[500];
+    char rbuffer[128];
     t_ping_pkt pckt;
-
-    (void)flag;
 
     struct sockaddr_in r_addr;
 
@@ -103,7 +101,7 @@ void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
         for (i = 0; i < sizeof(pckt.msg) - 1; i++)
             pckt.msg[i] = i + '0';
         pckt.msg[i] = 0;
-        pckt.hdr.un.echo.sequence = msg_count++;
+        pckt.hdr.un.echo.sequence = htons(msg_count++);
         pckt.hdr.checksum = checksum(&pckt,sizeof(pckt));
 
         usleep(info.sleep_rate);
@@ -121,9 +119,17 @@ void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
             printf("packet receive failed\n");
         else
         {
-            printf("packet receive\n");
+            printf("response receive\n");
+            if (!flag)
+                continue;
+            struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
+            if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
+                printf("Error... Packet received with ICMP type %1$d:%1$x code %2$d:%2$x\n", recv_hdr->type, recv_hdr->code);
+            else
+                printf("packet receive");
         }
     }
+    printf("fin de la boucle\n");
 }
 
 int main(int argc, char **argv)
