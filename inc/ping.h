@@ -44,4 +44,6 @@ void fatal_error(char *error);
 /* parameters.c */
 t_info manage_args(char **args);
 
+/* print.c */
+void print();
 #endif

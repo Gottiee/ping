@@ -90,7 +90,7 @@ void send_ping(int sockfd, t_ping_pkt *pckt, struct sockaddr_in *ping_addr)
         fatal_perror("Packet Sending Failed");
 }
 
-void receive_ping(int sockfd)
+bool receive_ping(int sockfd)
 {
     char rbuffer[128];
 
@@ -100,10 +100,13 @@ void receive_ping(int sockfd)
     {
         struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
         if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
+        {
             printf("Error... Packet received with ICMP type %d code %d\n", recv_hdr->type, recv_hdr->code);
-        else
-            printf("packet receive\n");
+            return false;
+        }
+        return true;
     }
+    return false;
 }
 
 void fill_icmp(t_ping_pkt *pckt, int *msg_count)
@@ -125,18 +128,24 @@ void ping_loop(int sockfd, t_info info, struct sockaddr_in *ping_addr)
 {
     t_ping_pkt pckt;
     int msg_count = 1;
+    struct timespec time_loop_start, time_loop_end, time_start, time_end;
 
-    // struct timespec time_start, time_end, tfs, tfe;
+    (void)time_loop_end;
+    (void)time_loop_start;
+    (void)time_end;
+
     // long double rtt_msec = 0, total_msec = 0;
 
     setup_socket(sockfd, info);
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
 
     while (nbr_loop)
     {
         fill_icmp(&pckt, &msg_count);
         usleep(info.sleep_rate);
         send_ping(sockfd, &pckt, ping_addr);
-        receive_ping(sockfd);
+        if (receive_ping(sockfd))
+            print();
     }
     printf("fin de la boucle\n");
 }

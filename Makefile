@@ -19,7 +19,8 @@ SAN			= -fsanitize=address
 SRC_FILES = ping \
 error \
 parameters \
-signal
+signal \
+print
 
 C_FILES		=	$(addsuffix .c, $(SRC_FILES))
 SRCS		=	$(addprefix $(SRC_DIR), $(C_FILES))
@@ -60,7 +61,7 @@ clean:
 			@echo "$(BLUE)$(NAME) object files cleaned!$(DEF_COLOR)"
 
 fclean:		clean
-#			@$(RM) -f $(NAME) woody asm/payload asm/opcode
+			@$(RM) -f $(NAME) 
 
 re:			fclean
 			@make --no-print-directory all
