@@ -41,7 +41,6 @@ bool dns_lookup(char *input_domain, char *ip, struct sockaddr_in *addr_con)
 {
     int value;
 
-    printf("\nResolving DNS...\n");
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -107,6 +106,7 @@ void send_ping(int sockfd, t_ping_pkt *pckt, struct sockaddr_in *ping_addr, stru
         fatal_perror("Packet Sending Failed");
 }
 
+
 bool receive_ping(int sockfd, t_info *info)
 {
     char rbuffer[128];
@@ -123,6 +123,7 @@ bool receive_ping(int sockfd, t_info *info)
         }
         struct iphdr *recv_ip = (struct iphdr *)rbuffer;
         info->return_ttl = recv_ip->ttl;
+        info->msg_receive++;
         return true;
     }
     return false;
@@ -139,7 +140,6 @@ void fill_icmp(t_ping_pkt *pckt, int *msg_count)
         pckt->msg[i] = i + '0';
     pckt->msg[i] = 0;
     pckt->hdr.un.echo.sequence = htons(*msg_count);
-    *msg_count = *msg_count + 1;
     pckt->hdr.checksum = checksum(pckt,sizeof((*pckt)));
 }
 
@@ -147,9 +147,7 @@ void ping_loop(int sockfd, t_info *info, struct sockaddr_in *ping_addr)
 {
     t_ping_pkt pckt;
     int msg_count = 1;
-    struct timespec time_loop_start,  time_start, time_end;
-
-    (void)time_end;
+    struct timespec time_loop_start,  time_start;
 
     setup_socket(sockfd, info);
     clock_gettime(CLOCK_MONOTONIC, &time_start);
@@ -157,12 +155,13 @@ void ping_loop(int sockfd, t_info *info, struct sockaddr_in *ping_addr)
     while (nbr_loop)
     {
         fill_icmp(&pckt, &msg_count);
-        usleep(info->sleep_rate);
         send_ping(sockfd, &pckt, ping_addr, &time_loop_start);
         if (receive_ping(sockfd, info))
             print(time_loop_start, info, msg_count);
+        msg_count ++;
+        usleep(info->sleep_rate);
     }
-    printf("fin de la boucle\n");
+    print_end_loop(&time_start, info, msg_count);
 }
 
 int main(int argc, char **argv)
@@ -174,12 +173,12 @@ int main(int argc, char **argv)
     (void)argc;
     int sockfd = socket_creation();
     if (sockfd == -1)
-        fatal_perror("Error: socket creation");
+        fatal_error("ping: Lacking privilege for icmp socket.\n");
 
     //modifier, je ne dois pas prendre argv1 normalement
     fill_sockaddr_in(&addr_con, argv[1], &info);
     manage_args(argv, &info);
-
+    print_header(&info);
     signal(SIGINT, loop_handler);
     ping_loop(sockfd, &info, &addr_con);
 }

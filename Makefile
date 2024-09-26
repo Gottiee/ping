@@ -8,7 +8,7 @@ OBJ_DIR		= 	obj/
 SUBDIR		=	obj/
 
 CC			= gcc
-CFLAGS		= -Wall -Werror -Wextra -g -MMD -MP
+CFLAGS		= -lm -Wall -Werror -Wextra -g -MMD -MP
 
 RM			= rm -rf
 AR			= ar rcs
@@ -31,7 +31,6 @@ DEPS		=	$(OBJS:.o=.d)
 
 COUNT	:= $(words $(SRC_FILES))
 LOAD	= 0
-DIVIDE	= 0
 SPACE = $(COUNT)
 
 #	 MANDATORY
@@ -39,14 +38,13 @@ all:		 obj $(NAME)
 			
 
 $(NAME):	$(OBJS)
-			@$(CC) $(CFLAGS) $^ -o $@ 
+			@$(CC) $(CFLAGS) $^ -o $@ -lm
 			@echo "$(FONT_BOLD)FILES LOAD ! $(FONT_RESET)    $(COUNT)/($(COUNT))"
 			@echo "$(RED)$(NAME) compiled !$(DEF_COLOR)"
-#			@./asm/shell_code.sh
 
 $(OBJ_DIR)%.o:	 $(SRC_DIR)%.c 
 			@$(CC) $(CFLAGS) $(ADDFLAGS) -c -o $@ $< 
-			@echo "$(BLUE)Creating object file -> $(WHITE)$(notdir $@)... $(RED)[Done]$(NOC)"
+			@echo "$(BLUE)Creating object file -> $(MAGENTA)$(notdir $@)... $(RED)[Done]$(NOC)"
 
 #	BONUS
 bonus:		obj $(LIB) $(NAME_BONUS)

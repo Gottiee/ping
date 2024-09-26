@@ -15,11 +15,13 @@
 #include <time.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <math.h>
 
 extern int nbr_loop;
 
 #define PING_PKT_S 64
 #define RECV_TIMEOUT 1 // timeout for receving packet (in seconds)
+#define MAX_PINGS 100000
 
 typedef struct s_ping_pkt
 {
@@ -36,6 +38,11 @@ typedef struct s_info
     char domain[500];
     char reverse_domain[500];
     int return_ttl;
+    unsigned int msg_receive;
+    double min;
+    double max;
+    double times[MAX_PINGS];
+
 } t_info;
 
 /* signal.c */
@@ -50,5 +57,7 @@ void manage_args(char **args, t_info *info);
 
 /* print.c */
 void print(struct timespec time_loop_start, t_info *info, int msg_count);
+void print_end_loop(struct timespec *time_start, t_info *info, int msg_count);
+void print_header(t_info *info);
 
 #endif
