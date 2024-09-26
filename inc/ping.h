@@ -32,6 +32,10 @@ typedef struct s_info
 {
     int ttl;
     int sleep_rate;
+    char ip[1025];
+    char domain[500];
+    char reverse_domain[500];
+    int return_ttl;
 } t_info;
 
 /* signal.c */
@@ -42,8 +46,9 @@ void fatal_perror(char *error);
 void fatal_error(char *error);
 
 /* parameters.c */
-t_info manage_args(char **args);
+void manage_args(char **args, t_info *info);
 
 /* print.c */
-void print();
+void print(struct timespec time_loop_start, t_info *info, int msg_count);
+
 #endif
