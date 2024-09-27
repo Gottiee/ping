@@ -10,7 +10,7 @@ void add_ping_time(double rtt, t_info *info) {
     }
 }
 
-void print(struct timespec time_loop_start, t_info *info, int msg_count)
+void print(struct timespec time_loop_start, t_info *info)
 {
     struct timespec time_loop_end;
     double rtt_msec = 0;
@@ -30,7 +30,7 @@ void print(struct timespec time_loop_start, t_info *info, int msg_count)
    
     printf("%d bytes from ", PING_PKT_S);
     printf("%s", info->ip);
-    printf(": icmp_seq=%d ttl=%d time=%.3f ms\n", msg_count - 1, info->return_ttl, rtt_msec);
+    printf(": icmp_seq=%d ttl=%d time=%.3f ms\n", info->sequence, info->return_ttl, rtt_msec);
     add_ping_time(rtt_msec, info);
 }
 
@@ -55,7 +55,6 @@ double calculate_std_deviation(double mean, t_info *info)
 void print_end_loop(struct timespec *time_start, t_info *info, int msg_count)
 {
     (void)time_start;
-    msg_count -= 1;
     // struct timespec time_end;
     // double rtt_msec = 0;
 
@@ -79,7 +78,7 @@ void print_end_loop(struct timespec *time_start, t_info *info, int msg_count)
     printf("%d packets transmitted, %d packets received, %.0f%% packet loss\n", msg_count, info->msg_receive, packet_loss);
     double average = calculate_mean(info);
     double dev = calculate_std_deviation(average, info);
-    printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms", info->min, average, info->max, dev);
+    printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n", info->min, average, info->max, dev);
 }
 
 void print_header(t_info *info)
@@ -89,4 +88,11 @@ void print_header(t_info *info)
     else
         printf("PING %s", info->ip);
     printf(": 56 data bytes\n");
+}
+
+void print_usage()
+{
+    printf("ping: missing host operand\n");
+    printf("Try 'ping --help' or 'ping --usage' for more information.\n");
+    exit(1);
 }

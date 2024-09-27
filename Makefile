@@ -20,7 +20,7 @@ SRC_FILES = ping \
 error \
 parameters \
 signal \
-print
+print 
 
 C_FILES		=	$(addsuffix .c, $(SRC_FILES))
 SRCS		=	$(addprefix $(SRC_DIR), $(C_FILES))

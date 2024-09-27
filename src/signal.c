@@ -1,7 +1,9 @@
 #include "../inc/ping.h"
 
-void loop_handler(int foo)
+void loop_handler(int signal)
 {
-    (void)foo;
-    nbr_loop = 0;
+    if (signal == SIGINT)
+        nbr_loop = 0;
+    else if (signal == SIGALRM)
+        send_ping();
 }
