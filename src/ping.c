@@ -59,26 +59,26 @@ bool dns_lookup(char *input_domain, char *ip, struct sockaddr_in *addr_con)
     return true;
 }
 
-bool fill_sockaddr_in(struct sockaddr_in *addr_con, char *target, t_info *info) 
+bool fill_sockaddr_in(struct sockaddr_in *addr_con, char *target) 
 {
     memset(addr_con, 0, sizeof(struct sockaddr_in));
-    info->domain[0] = '\0';
-    info->ip[0] = '\0' ;
+    send_data.info->domain[0] = '\0';
+    send_data.info->ip[0] = '\0' ;
 
     // tcheck si c'est une address ipv4
     if (inet_pton(AF_INET, target, &(addr_con->sin_addr)) == 1) {
         addr_con->sin_family = AF_INET;
         addr_con->sin_port = htons(0);
-        strncpy(info->ip, target, 1024);
+        strncpy(send_data.info->ip, target, 1024);
         return true;
     }
-    if (!dns_lookup(target, info->ip, addr_con))
-        fatal_error("ping: unknown host\n", info->start);
-    strncpy(info->domain, target, 499);
-    char *tmp = reverse_dns_lookup(info->ip);
+    if (!dns_lookup(target, send_data.info->ip, addr_con))
+        fatal_error("ping: unknown host\n");
+    strncpy(send_data.info->domain, target, 499);
+    char *tmp = reverse_dns_lookup(send_data.info->ip);
     if (!tmp)
         return false;
-    strncpy(info->reverse_domain, tmp, 499);
+    strncpy(send_data.info->reverse_domain, tmp, 499);
     free(tmp);
     return true;
 }
@@ -91,18 +91,18 @@ int socket_creation()
     return sockfd;
 }
 
-bool setup_socket(int sockfd, t_info *info)
+bool setup_socket(t_info *info)
 {
     struct timeval tv_out;
     tv_out.tv_sec = RECV_TIMEOUT;
     tv_out.tv_usec = 0;
     
-    if (setsockopt(sockfd, SOL_IP, IP_TTL, &info->ttl, sizeof(info->ttl)) != 0)
+    if (setsockopt(send_data.sockfd, SOL_IP, IP_TTL, &info->ttl, sizeof(info->ttl)) != 0)
     {
         perror("Error: setup ttl to socket");
         return false;
     }
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out)) != 0)
+    if (setsockopt(send_data.sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_out, sizeof(tv_out)) != 0)
     {
         perror("Error: setup timeout socket");
         return false;
@@ -130,106 +130,106 @@ void send_ping()
     fill_icmp(send_data.pckt, send_data.msg_count);
     clock_gettime(CLOCK_MONOTONIC, send_data.time_loop_start);
     if (sendto(send_data.sockfd, send_data.pckt, sizeof(t_ping_pkt), 0, (struct sockaddr *)send_data.ping_addr, sizeof(*send_data.ping_addr)) <= 0 )
-        fatal_perror("Packet Sending Failed", send_data.info->start);
+        fatal_perror("Packet Sending Failed");
     (*send_data.msg_count) ++;
     alarm(1);
 }
 
-bool receive_ping(int sockfd, t_info *info)
+bool receive_ping()
 {
     char rbuffer[128];
 
-    if (recvfrom(sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL) <= 0)
+    if (recvfrom(send_data.sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL) <= 0)
         return false;
     struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
     if (recv_hdr->un.echo.id != send_data.info->id || recv_hdr->type == 8)
         return false;
-    info->sequence = htons(recv_hdr->un.echo.sequence);
+    send_data.info->sequence = htons(recv_hdr->un.echo.sequence);
     if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
     {
-        // printf("Error... Packet received with ICMP type %d code %d\n", recv_hdr->type, recv_hdr->code);
-        print_error_code(recv_hdr->type, recv_hdr->code, info);
+        print_error_code(recv_hdr->type, recv_hdr->code);
         return false;
     }
     struct iphdr *recv_ip = (struct iphdr *)rbuffer;
-    info->return_ttl = recv_ip->ttl;
-    info->msg_receive++;
+    send_data.info->return_ttl = recv_ip->ttl;
+    send_data.info->msg_receive++;
     return true;
 }
 
-void reset_info(t_info *info)
+void reset_info()
 {
-    info->msg_receive = 0;
-    info->min = 0;
-    info->max = 0;
-    memset(info->times, MAX_PINGS, sizeof(double));
+    send_data.info->msg_receive = 0;
+    send_data.info->min = 0;
+    send_data.info->max = 0;
+    memset(send_data.info->times, MAX_PINGS, sizeof(double));
 }
 
-void fill_global_send(int sockfd, t_ping_pkt *pckt, struct sockaddr_in *ping_addr, struct timespec *time_loop_start, t_info *info, int *msg_count)
+void fill_global_send(t_ping_pkt *pckt, struct timespec *time_loop_start, int *msg_count)
 {
-    send_data.sockfd = sockfd;
     send_data.pckt = pckt;
-    send_data.ping_addr = ping_addr;
     send_data.time_loop_start = time_loop_start;
-    send_data.info = info;
     send_data.msg_count = msg_count;
 }
 
-void ping_loop(int sockfd, t_info *info, struct sockaddr_in *ping_addr)
+void ping_loop()
 {
     t_ping_pkt pckt;
     int msg_count = 0;
     struct timespec time_loop_start,  time_start;
-    reset_info(info);
-
-    if (!setup_socket(sockfd, info))
+    reset_info();
+    if (!setup_socket(send_data.info))
         return;
     clock_gettime(CLOCK_MONOTONIC, &time_start);
-    fill_global_send(sockfd, &pckt, ping_addr, &time_loop_start, info, &msg_count);
-    send_ping(sockfd, &pckt, ping_addr, &time_loop_start, info, &msg_count);
+    fill_global_send(&pckt, &time_loop_start, &msg_count);
+    send_ping();
     while (nbr_loop)
     {
-        if (receive_ping(sockfd, info))
-            print(time_loop_start, info);
+        if (receive_ping())
+            print(time_loop_start, send_data.info);
     }
-    print_end_loop(&time_start, info, msg_count);
+    print_end_loop(&time_start, send_data.info, msg_count);
 }
 
-void do_all_ping(t_info *info, struct sockaddr_in *addr_con, char *target, int sockfd)
+void do_all_ping(struct sockaddr_in *addr_con, char *target)
 {
-    if (!fill_sockaddr_in(addr_con, target, info))
+    if (!fill_sockaddr_in(addr_con, target))
         return;
-    print_header(info);
-    signal(SIGINT, loop_handler);
-    signal(SIGALRM, loop_handler);
-    ping_loop(sockfd, info, addr_con);
+    send_data.ping_addr = addr_con;
+    print_header();
+    ping_loop();
+}
+
+void loop_for_all_domain(t_to_ping *tmp)
+{
+    struct sockaddr_in addr_con;
+
+    while (tmp)
+    {
+        do_all_ping(&addr_con, tmp->target);
+        tmp = tmp->next;
+        nbr_loop = 1;
+    }
 }
 
 int main(int argc, char **argv)
 {
-    struct sockaddr_in addr_con;
     t_info info;
-    t_to_ping *tmp;
+    send_data.info = &info;
 
     if (argc == 1)
         print_usage();
-    int sockfd = socket_creation();
-    if (sockfd == -1)
-        fatal_error("ping: Lacking privilege for icmp socket.\n", NULL);
-    t_to_ping *start = malloc(sizeof(t_to_ping));
-    if (!start)
-        fatal_perror("Error in malloc", info.start);
-    handle_args(start, &argv[1], &info);
+    init_info();
+    send_data.sockfd = socket_creation();
+    if (send_data.sockfd == -1)
+        fatal_error("ping: Lacking privilege for icmp socket.\n");
+    send_data.info->start = malloc(sizeof(t_to_ping));
+    if (!send_data.info->start)
+        fatal_perror("Error in malloc");
+    handle_args(&argv[1]);
     srand(time(NULL));
-    
-    tmp = start;
-    while (tmp)
-    {
-        do_all_ping(&info, &addr_con, tmp->target, sockfd);
-        tmp = tmp->next;
-        nbr_loop = 1;
-    }
-
-    free_list(start);
-    close(sockfd);
+    signal(SIGINT, loop_handler);
+    signal(SIGALRM, loop_handler);
+    loop_for_all_domain(send_data.info->start);
+    free_list(send_data.info->start);
+    close(send_data.sockfd);
 }

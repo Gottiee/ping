@@ -27,41 +27,39 @@ void add_to_ping_list(char *arg, t_to_ping *start)
     next->target = arg;
 }
 
-void handle_options(char *arg, t_info *info)
+void handle_options(char *arg)
 {
     (void)arg;
-    (void)info;
 }
 
-void sort_arg(char *arg, t_to_ping *start, t_info *info)
+void sort_arg(char *arg)
 {
     if (arg && arg[0] != '-')
-        add_to_ping_list(arg, start);
+        add_to_ping_list(arg, send_data.info->start);
     else if (arg)
-        handle_options(arg, info);
+        handle_options(arg);
     else
-        fatal_error("Error arg is empty while parsing arguments\n", info->start);
+        fatal_error("Error arg is empty while parsing arguments\n");
 }
 
-void handle_args(t_to_ping *start, char **argv, t_info *info)
+void init_info()
+{
+    send_data.info->ttl = 64;
+    send_data.info->sleep_rate = 1000000; // microsec
+    send_data.info->msg_receive = 0;
+    send_data.info->min = 0;
+    send_data.info->max = 0;
+    send_data.info->start = NULL;
+}
+
+void handle_args(char **argv)
 {
     int i = -1;
 
-    set_info(info);
-    info->start = start;
-    start->next = NULL;
-    start->target = NULL;
+    send_data.info->start->next = NULL;
+    send_data.info->start->target = NULL;
     while (argv[++i])
     {
-        sort_arg(argv[i], start, info);
+        sort_arg(argv[i]);
     }
-}
-
-void set_info(t_info *info)
-{
-    info->ttl = 64;
-    info->sleep_rate = 1000000; // microsec
-    info->msg_receive = 0;
-    info->min = 0;
-    info->max = 0;
 }

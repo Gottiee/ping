@@ -10,11 +10,11 @@ void add_ping_time(double rtt, t_info *info) {
     }
 }
 
-void print_seq(t_info *info)
+void print_seq()
 {
     printf("%d bytes from ", PING_PKT_S);
-    printf("%s", info->ip);
-    printf(": icmp_seq=%d ", info->sequence);
+    printf("%s", send_data.info->ip);
+    printf(": icmp_seq=%d ", send_data.info->sequence);
 }
 
 void print(struct timespec time_loop_start, t_info *info)
@@ -87,12 +87,12 @@ void print_end_loop(struct timespec *time_start, t_info *info, int msg_count)
     printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n", info->min, average, info->max, dev);
 }
 
-void print_header(t_info *info)
+void print_header()
 {
-    if (strlen(info->domain))
-        printf("PING %s (%s)", info->domain, info->ip);
+    if (strlen(send_data.info->domain))
+        printf("PING %s (%s)", send_data.info->domain, send_data.info->ip);
     else
-        printf("PING %s", info->ip);
+        printf("PING %s", send_data.info->ip);
     printf(": 56 data bytes\n");
 }
 
@@ -156,9 +156,9 @@ void print_time_exceeded(int code)
     printf("\n");
 }
 
-void print_error_code(int type, int code, t_info *info)
+void print_error_code(int type, int code)
 {
-    print_seq(info);
+    print_seq();
     if (type == ICMP_DEST_UNREACH)
         print_unreachable(code);
     if (type == ICMP_SOURCE_QUENCH)

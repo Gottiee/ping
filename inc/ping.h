@@ -68,20 +68,20 @@ extern t_global_send send_data;
 void loop_handler(int signal);
 
 /* error.c */
-void fatal_perror(char *error, t_to_ping *start);
-void fatal_error(char *error, t_to_ping *start);
+void fatal_perror(char *error);
+void fatal_error(char *error);
 
 /* parameters.c */
-void set_info(t_info *info);
-void handle_args(t_to_ping *start, char **argv, t_info *info);
+void init_info();
+void handle_args(char **argv);
 void free_list(t_to_ping *start);
 
 /* print.c */
 void print(struct timespec time_loop_start, t_info *info);
 void print_end_loop(struct timespec *time_start, t_info *info, int msg_count);
-void print_header(t_info *info);
+void print_header();
 void print_usage();
-void print_error_code(int type, int code, t_info *info);
+void print_error_code(int type, int code);
 
 /* ping.c */
 void send_ping();
