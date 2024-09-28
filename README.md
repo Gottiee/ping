@@ -24,7 +24,9 @@ sudo valgrind  --suppressions=dlopen.supp ./ft_ping google.com
     - continuer la loop, mais faire une affichage particulier
     - `From 10.34.254.254 icmp_seq=15 Time to live exceeded`
     - [docu icmp](https://sites.uclouvain.be/SystInfo/usr/include/netinet/ip_icmp.h.html)
-- [ ] modifier le code pour passer les variables depuis la variable global et pas les parametre 
+- [x] modifier le code pour passer les variables depuis la variable global et pas les parametre 
+- [ ] Gerer les options demandé
+- [ ] Gerer les autres options ? 
 - [ ] gerer quand je recois aucun paquet l'affichage des statistique a la fin (average et var) ?
 
 https://www.geeksforgeeks.org/ping-in-c/
