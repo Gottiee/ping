@@ -142,18 +142,18 @@ bool receive_ping(int sockfd, t_info *info)
     if (recvfrom(sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL) <= 0)
         return false;
     struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
-    if (recv_hdr->un.echo.id != send_data.info->id)
+    if (recv_hdr->un.echo.id != send_data.info->id || recv_hdr->type == 8)
         return false;
+    info->sequence = htons(recv_hdr->un.echo.sequence);
     if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
     {
-        printf("Error... Packet received with ICMP type %d code %d\n", recv_hdr->type, recv_hdr->code);
-        // print_error_code();
+        // printf("Error... Packet received with ICMP type %d code %d\n", recv_hdr->type, recv_hdr->code);
+        print_error_code(recv_hdr->type, recv_hdr->code, info);
         return false;
     }
     struct iphdr *recv_ip = (struct iphdr *)rbuffer;
     info->return_ttl = recv_ip->ttl;
     info->msg_receive++;
-    info->sequence = htons(recv_hdr->un.echo.sequence);
     return true;
 }
 

@@ -10,6 +10,13 @@ void add_ping_time(double rtt, t_info *info) {
     }
 }
 
+void print_seq(t_info *info)
+{
+    printf("%d bytes from ", PING_PKT_S);
+    printf("%s", info->ip);
+    printf(": icmp_seq=%d ", info->sequence);
+}
+
 void print(struct timespec time_loop_start, t_info *info)
 {
     struct timespec time_loop_end;
@@ -28,9 +35,8 @@ void print(struct timespec time_loop_start, t_info *info)
     }
     rtt_msec = sec_diff * 1000.0 + (nsec_diff / 1000000.0);
    
-    printf("%d bytes from ", PING_PKT_S);
-    printf("%s", info->ip);
-    printf(": icmp_seq=%d ttl=%d time=%.3f ms\n", info->sequence, info->return_ttl, rtt_msec);
+    print_seq(info);
+    printf("ttl=%d time=%.3f ms\n", info->return_ttl, rtt_msec);
     add_ping_time(rtt_msec, info);
 }
 
@@ -95,4 +101,86 @@ void print_usage()
     printf("ping: missing host operand\n");
     printf("Try 'ping --help' or 'ping --usage' for more information.\n");
     exit(1);
+}
+
+void print_unreachable(int code)
+{
+    if (code == ICMP_NET_UNREACH)
+        printf("Network Unreachable");
+    else if (code == ICMP_HOST_UNREACH)
+        printf("Host Unreachable");
+    else if (code == ICMP_PROT_UNREACH)
+        printf("Protocol Unreachable");
+    else if (code == ICMP_PORT_UNREACH)
+        printf("Port Unreachable");
+    else if (code == ICMP_FRAG_NEEDED)
+        printf("Fragmentation Needed/DF set");
+    else if (code == ICMP_SR_FAILED)
+        printf("Source Route failed");
+    else if (code == ICMP_PKT_FILTERED)
+        printf("Packet filtered");
+    else if (code == ICMP_PREC_VIOLATION)
+        printf("Precedence violation");
+    else if (code == ICMP_PREC_CUTOFF)
+        printf("Precedence cut off");
+    else if (code == NR_ICMP_UNREACH)
+        printf("instead of hardcoding immediate value");
+    else   
+        printf("Unknow Error For ICMP_DEST_UNREACH code %d", code);
+    printf("\n");
+}
+
+void print_redirect(int code)
+{
+    if (code == ICMP_REDIR_NET)
+        printf("Redirect Net");
+    else if (code == ICMP_REDIR_HOST)
+        printf("Redirect Host");
+    else if (code == ICMP_REDIR_NETTOS)
+        printf("Redirect Net for TOS");
+    else if (code == ICMP_REDIR_HOSTTOS)
+        printf("Redirect Host for TOS");
+    else
+        printf("Unknow Error For ICMP_REDIRECT code %d", code);
+    printf("\n");
+}       
+
+void print_time_exceeded(int code)
+{
+    if (code == ICMP_EXC_TTL)
+        printf("TTL count exceeded");
+    else if (code == ICMP_EXC_FRAGTIME)
+        printf("Fragment Reass time exceeded");
+    else
+        printf("Unknow Error For ICMP_TIME_EXCEEDED code %d", code);
+    printf("\n");
+}
+
+void print_error_code(int type, int code, t_info *info)
+{
+    print_seq(info);
+    if (type == ICMP_DEST_UNREACH)
+        print_unreachable(code);
+    if (type == ICMP_SOURCE_QUENCH)
+        printf("Source Quench\n");
+    if (type == ICMP_REDIRECT)
+        print_redirect(code);
+    if (type == ICMP_TIME_EXCEEDED)
+        print_time_exceeded(code);
+    if (type == ICMP_PARAMETERPROB)
+        printf("Parameter Problem\n");
+    if (type == ICMP_TIMESTAMP)
+        printf("Timestamp Request\n");
+    if (type == ICMP_TIMESTAMPREPLY)
+        printf("Timestamp Reply\n");
+    if (type == ICMP_INFO_REQUEST)
+        printf("Information Request\n");
+    if (type == ICMP_INFO_REPLY)
+        printf("Information Reply\n");
+    if (type == ICMP_ADDRESS)
+        printf("Address Mask Request\n");
+    if (type == ICMP_ADDRESSREPLY)
+        printf("Address Mask Reply\n");
+    else
+        printf("Unknow error for type %d\n", type);
 }

@@ -17,13 +17,14 @@ sudo valgrind  --suppressions=dlopen.supp ./ft_ping google.com
 
 ### TODO
 
-- [ ] gerer le ping 127.0.0.1
+- [x] gerer le ping 127.0.0.1
     - verifier que le type de la reponse ne soit pas 8, sinon quand je loop back je recois mon propre ping. Si c'est 8 je laisse tomber le recv et je passe au suivant
-- [ ] gerer les codes erreur pour afficher les bonnes erreurs
+- [x] gerer les codes erreur pour afficher les bonnes erreurs
     - fonction `print_error_code();`  ping.c -> l.150
     - continuer la loop, mais faire une affichage particulier
     - `From 10.34.254.254 icmp_seq=15 Time to live exceeded`
     - [docu icmp](https://sites.uclouvain.be/SystInfo/usr/include/netinet/ip_icmp.h.html)
 - [ ] modifier le code pour passer les variables depuis la variable global et pas les parametre 
+- [ ] gerer quand je recois aucun paquet l'affichage des statistique a la fin (average et var) ?
 
 https://www.geeksforgeeks.org/ping-in-c/

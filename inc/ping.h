@@ -81,6 +81,7 @@ void print(struct timespec time_loop_start, t_info *info);
 void print_end_loop(struct timespec *time_start, t_info *info, int msg_count);
 void print_header(t_info *info);
 void print_usage();
+void print_error_code(int type, int code, t_info *info);
 
 /* ping.c */
 void send_ping();
