@@ -135,9 +135,9 @@ void send_ping()
 }
 
 // lors d'un paquet d'erreur verifie que le le paquet icmp envoye en data est celui de notre programme
-bool analyse_error(struct icmphdr *icmp)
+bool analyse_error()
 {
-    if (icmp->un.echo.id != send_data.info->id)
+    if (send_data.error_icmp->un.echo.id != send_data.info->id)
         return false;
     return true;
 }
@@ -145,14 +145,18 @@ bool analyse_error(struct icmphdr *icmp)
 bool receive_ping()
 {
     char rbuffer[128];
-
-    if (recvfrom(send_data.sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL) <= 0)
+    send_data.info->size_recv = recvfrom(send_data.sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL);
+    send_data.info->size_recv -= sizeof(struct iphdr);
+ 
+    if (send_data.info->size_recv <= 0)
         return false;
+    
     struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
     if (recv_hdr->un.echo.id == 0)
     {
-        struct iphdr *error_ip = (struct iphdr *)(rbuffer + sizeof(struct icmphdr) + sizeof(struct iphdr));
-        if (!analyse_error((struct icmphdr *)(rbuffer + sizeof(struct icmphdr) + sizeof(struct iphdr) + (error_ip->ihl * 4))))
+        send_data.error_ip = (struct iphdr *)(rbuffer + sizeof(struct icmphdr) + sizeof(struct iphdr));
+        send_data.error_icmp = (struct icmphdr *)(rbuffer + sizeof(struct icmphdr) + sizeof(struct iphdr) + (send_data.error_ip->ihl * 4));
+        if (!analyse_error())
             return false;
     }
     else if (recv_hdr->un.echo.id != send_data.info->id || recv_hdr->type == 8)
@@ -186,6 +190,8 @@ void fill_global_send(t_ping_pkt *pckt, struct timespec *time_loop_start, int *m
 
 void ping_loop()
 {
+    if (!nbr_loop)
+        return;
     t_ping_pkt pckt;
     int msg_count = 0;
     struct timespec time_loop_start,  time_start;
@@ -233,9 +239,9 @@ int main(int argc, char **argv)
     t_info info;
     send_data.info = &info;
 
+    init_info();
     if (argc == 1)
         print_usage();
-    init_info();
     send_data.sockfd = socket_creation();
     if (send_data.sockfd == -1)
         fatal_error("ping: Lacking privilege for icmp socket.\n");

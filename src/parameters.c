@@ -34,7 +34,7 @@ char handle_options(char *arg)
         if (*arg == 'v')
             send_data.info->verbose = true;
         else if (*arg == '?')
-            printf("detect '?'\n");
+            print_option();
         else if (*arg == 't')
             send_data.info->ttl = 3;
         else

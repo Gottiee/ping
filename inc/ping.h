@@ -50,6 +50,8 @@ typedef struct s_info
     u_int16_t sequence;
     u_int16_t id; 
     bool verbose;
+    ssize_t size_recv;
+
 } t_info;
 
 typedef struct s_global_send
@@ -60,6 +62,8 @@ typedef struct s_global_send
     struct timespec *time_loop_start;
     t_info *info;
     int *msg_count;
+    struct iphdr *error_ip;
+    struct icmphdr *error_icmp;
 } t_global_send;
 
 extern int nbr_loop;
@@ -84,6 +88,7 @@ void print_header();
 void print_usage();
 void print_error_code(int type, int code);
 void print_error_usage(char c);
+void print_option();
 
 /* ping.c */
 void send_ping();
