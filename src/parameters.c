@@ -27,9 +27,21 @@ void add_to_ping_list(char *arg, t_to_ping *start)
     next->target = arg;
 }
 
-void handle_options(char *arg)
+char handle_options(char *arg)
 {
-    (void)arg;
+    while(*arg)
+    {
+        if (*arg == 'v')
+            send_data.info->verbose = true;
+        else if (*arg == '?')
+            printf("detect '?'\n");
+        else if (*arg == 't')
+            send_data.info->ttl = 3;
+        else
+            return *arg;
+        arg ++;
+    }
+    return '\0';
 }
 
 void sort_arg(char *arg)
@@ -37,7 +49,12 @@ void sort_arg(char *arg)
     if (arg && arg[0] != '-')
         add_to_ping_list(arg, send_data.info->start);
     else if (arg)
-        handle_options(arg);
+    {
+        char c = handle_options(++arg);
+        if (c)
+            print_error_usage(c);
+
+    }
     else
         fatal_error("Error arg is empty while parsing arguments\n");
 }
@@ -50,6 +67,7 @@ void init_info()
     send_data.info->min = 0;
     send_data.info->max = 0;
     send_data.info->start = NULL;
+    send_data.info->verbose = false;
 }
 
 void handle_args(char **argv)

@@ -49,6 +49,7 @@ typedef struct s_info
     t_to_ping *start;
     u_int16_t sequence;
     u_int16_t id; 
+    bool verbose;
 } t_info;
 
 typedef struct s_global_send
@@ -82,6 +83,7 @@ void print_end_loop(struct timespec *time_start, t_info *info, int msg_count);
 void print_header();
 void print_usage();
 void print_error_code(int type, int code);
+void print_error_usage(char c);
 
 /* ping.c */
 void send_ping();

@@ -114,7 +114,6 @@ void fill_icmp(t_ping_pkt *pckt, int *msg_count)
 {
     long unsigned int i;
 
-    send_data.info->id = rand();
     bzero(pckt, sizeof(t_ping_pkt));
     pckt->hdr.type = ICMP_ECHO;
     pckt->hdr.un.echo.id = send_data.info->id;
@@ -135,6 +134,14 @@ void send_ping()
     alarm(1);
 }
 
+// lors d'un paquet d'erreur verifie que le le paquet icmp envoye en data est celui de notre programme
+bool analyse_error(struct icmphdr *icmp)
+{
+    if (icmp->un.echo.id != send_data.info->id)
+        return false;
+    return true;
+}
+
 bool receive_ping()
 {
     char rbuffer[128];
@@ -142,7 +149,13 @@ bool receive_ping()
     if (recvfrom(send_data.sockfd, rbuffer, sizeof(rbuffer), 0, NULL, NULL) <= 0)
         return false;
     struct icmphdr *recv_hdr = (struct icmphdr *)(rbuffer + sizeof(struct iphdr));
-    if (recv_hdr->un.echo.id != send_data.info->id || recv_hdr->type == 8)
+    if (recv_hdr->un.echo.id == 0)
+    {
+        struct iphdr *error_ip = (struct iphdr *)(rbuffer + sizeof(struct icmphdr) + sizeof(struct iphdr));
+        if (!analyse_error((struct icmphdr *)(rbuffer + sizeof(struct icmphdr) + sizeof(struct iphdr) + (error_ip->ihl * 4))))
+            return false;
+    }
+    else if (recv_hdr->un.echo.id != send_data.info->id || recv_hdr->type == 8)
         return false;
     send_data.info->sequence = htons(recv_hdr->un.echo.sequence);
     if (!(recv_hdr->type == 0 && recv_hdr->code == 0))
@@ -195,6 +208,7 @@ void do_all_ping(struct sockaddr_in *addr_con, char *target)
     if (!fill_sockaddr_in(addr_con, target))
         return;
     send_data.ping_addr = addr_con;
+    send_data.info->id = rand();
     print_header();
     ping_loop();
 }
@@ -202,6 +216,9 @@ void do_all_ping(struct sockaddr_in *addr_con, char *target)
 void loop_for_all_domain(t_to_ping *tmp)
 {
     struct sockaddr_in addr_con;
+
+    if (!tmp->target)
+        print_usage();
 
     while (tmp)
     {

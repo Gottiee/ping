@@ -93,7 +93,10 @@ void print_header()
         printf("PING %s (%s)", send_data.info->domain, send_data.info->ip);
     else
         printf("PING %s", send_data.info->ip);
-    printf(": 56 data bytes\n");
+    printf(": %d data bytes", PING_PKT_S - 8);
+    if (send_data.info->verbose)
+        printf(", id 0x%1$x = %1$d", send_data.info->id);
+    printf("\n");
 }
 
 void print_usage()
@@ -183,4 +186,19 @@ void print_error_code(int type, int code)
         printf("Address Mask Reply\n");
     else
         printf("Unknow error for type %d\n", type);
+}
+
+void print_optins()
+{
+    printf("Options:\n");
+    printf("  <destination>      dns name or ip address\n");
+    printf("  -v                 verbose output\n");
+}
+
+void print_error_usage(char c)
+{
+    printf("ping: invalid option -- '%c'\n\n", c);
+    printf("Try 'iping --help' or 'iping --usage' for more information.\n");
+
+    exit(3);
 }
