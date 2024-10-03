@@ -5,8 +5,13 @@ void print_option()
     printf("Usage: iping [OPTION...] HOST ...\n");
     printf("Send ICMP ECHO_REQUEST packets to network hosts.\n\n");
     printf("Options:\n");
-    printf("  -v                 verbose output\n");
-    printf("  -?                 give this help list\n");
+    printf("  -v            verbose output\n");
+    printf("  -?            give this help list\n");
+    printf("  -q            quiet output\n");
+    printf("  -c<number>    stop after sending <number> packets\n");
+    printf("  -ttl<number>  specify <number> as time-to-live\n");
+    printf("  -W<number>    wait <number> seconds for response\n");
+    printf("  -i<number>    wait <number> seconds between sending each packet\n");
     free_list(send_data.info->start);
     exit(3);
 }
@@ -29,6 +34,9 @@ void print_seq()
 
 void print(struct timespec time_loop_start, t_info *info)
 {
+
+    if (send_data.info->quiet)
+        return ;
     struct timespec time_loop_end;
     double rtt_msec = 0;
 
@@ -69,29 +77,16 @@ double calculate_std_deviation(double mean, t_info *info)
     return sqrt(sum_deviation / info->msg_receive);
 }
 
-void print_end_loop(struct timespec *time_start, t_info *info, int msg_count)
+void print_end_loop(t_info *info, int msg_count)
 {
-    (void)time_start;
-    // struct timespec time_end;
-    // double rtt_msec = 0;
-
-    // clock_gettime(CLOCK_MONOTONIC, &time_end);
-
-    // long sec_diff = time_end.tv_sec - time_start->tv_sec;
-    // long nsec_diff = time_end.tv_nsec - time_start->tv_nsec;
-
-    // if (nsec_diff < 0) {
-    //     sec_diff -= 1;
-    //     nsec_diff += 1000000000;
-    // }
-    // rtt_msec = sec_diff * 1000.0 + (nsec_diff / 1000000.0);
-
     if (strlen(info->domain))
         printf("--- %s ping statistics ---\n", info->domain);
     else
         printf("--- %s ping statistics ---\n", info->ip);
 
     float packet_loss = ((msg_count - info->msg_receive) / (double)msg_count) * 100;
+    if (msg_count == 0)
+        packet_loss = 0;
     printf("%d packets transmitted, %d packets received, %.0f%% packet loss\n", msg_count, info->msg_receive, packet_loss);
     if (!send_data.info->msg_receive)
         return ;
@@ -239,7 +234,7 @@ void print_error_verbose()
     addr.s_addr = send_data.error_ip->daddr;
     printf("  %s\n", inet_ntoa(addr));
     printf("ICMP: type %d, code %d, size 21484", send_data.error_icmp->type, send_data.error_icmp->code);
-    printf(", id 0x%.04hx, seq 0x%.04hx\n", htons(send_data.error_icmp->un.echo.id), htons(send_data.error_icmp->un.echo.sequence));
+    printf(", id 0x%.04hx, seq 0x%.04hx\n",send_data.error_icmp->un.echo.id, htons(send_data.error_icmp->un.echo.sequence));
 }
 
 void print_error_code(int type, int code)
@@ -276,7 +271,7 @@ void print_error_code(int type, int code)
 void print_error_usage(char c)
 {
     printf("ping: invalid option -- '%c'\n\n", c);
-    printf("Try 'iping --help' or 'iping --usage' for more information.\n");
+    printf("Try 'ping --help' or 'iping --usage' for more information.\n");
     free_list(send_data.info->start);
     exit(3);
 }

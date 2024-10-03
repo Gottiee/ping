@@ -27,6 +27,31 @@ void add_to_ping_list(char *arg, t_to_ping *start)
     next->target = arg;
 }
 
+void verify_next_number(char *arg, int size_arg)
+{
+    int i = size_arg - 1;
+
+    if (!arg[size_arg])
+        fatal_error_parsing_no_arg("ping: option requires an argument -- '%s'\n", arg);
+
+    while (arg[++i])
+    {
+        if (arg[i] < '0' || arg[i] > '9')
+            fatal_error_parsing("ping: invalid value (`%s' near `%c')\n", arg[i], &arg[size_arg]);
+    }
+}
+
+char numeric_option(char *arg, int size_arg, int *target, bool error_on_zero)
+{
+    verify_next_number(arg, size_arg);
+    arg += size_arg;
+    *target = atoi(arg);
+    if (error_on_zero)
+        if (!*target)
+            fatal_error("iping option value too small: 0\n");
+    return '\0';
+}
+
 char handle_options(char *arg)
 {
     while(*arg)
@@ -35,8 +60,16 @@ char handle_options(char *arg)
             send_data.info->verbose = true;
         else if (*arg == '?')
             print_option();
-        else if (*arg == 't')
-            send_data.info->ttl = 3;
+        else if (*arg == 'q')
+            send_data.info->quiet = true;
+        else if (*arg == 'c')
+            return numeric_option(arg, 1, &send_data.info->count, false);
+        else if (!strncmp("-ttl", arg, 4))
+            return numeric_option(++arg, 3, &send_data.info->ttl, true);
+        else if (*arg == 'W')
+            return numeric_option(arg, 1, &send_data.info->recv_timeout, true);
+        else if (*arg == 'i')
+            return numeric_option(arg, 1, &send_data.info->interval, true);
         else
             return *arg;
         arg ++;
@@ -68,6 +101,10 @@ void init_info()
     send_data.info->max = 0;
     send_data.info->start = NULL;
     send_data.info->verbose = false;
+    send_data.info->quiet = false;
+    send_data.info->count = -1;
+    send_data.info->recv_timeout = 1;
+    send_data.info->interval = 1;
 }
 
 void handle_args(char **argv)

@@ -94,7 +94,7 @@ int socket_creation()
 bool setup_socket(t_info *info)
 {
     struct timeval tv_out;
-    tv_out.tv_sec = RECV_TIMEOUT;
+    tv_out.tv_sec = send_data.info->recv_timeout;
     tv_out.tv_usec = 0;
     
     if (setsockopt(send_data.sockfd, SOL_IP, IP_TTL, &info->ttl, sizeof(info->ttl)) != 0)
@@ -126,12 +126,17 @@ void fill_icmp(t_ping_pkt *pckt, int *msg_count)
 
 void send_ping()
 {
+    if (send_data.info->count > -1 && *send_data.msg_count == send_data.info->count)
+    {
+        nbr_loop = 0;
+        return ;
+    }
     fill_icmp(send_data.pckt, send_data.msg_count);
     clock_gettime(CLOCK_MONOTONIC, send_data.time_loop_start);
     if (sendto(send_data.sockfd, send_data.pckt, sizeof(t_ping_pkt), 0, (struct sockaddr *)send_data.ping_addr, sizeof(*send_data.ping_addr)) <= 0 )
         fatal_perror("Packet Sending Failed");
     (*send_data.msg_count) ++;
-    alarm(1);
+    alarm(send_data.info->interval);
 }
 
 // lors d'un paquet d'erreur verifie que le le paquet icmp envoye en data est celui de notre programme
@@ -194,19 +199,18 @@ void ping_loop()
         return;
     t_ping_pkt pckt;
     int msg_count = 0;
-    struct timespec time_loop_start,  time_start;
+    struct timespec time_loop_start;
     reset_info();
     if (!setup_socket(send_data.info))
         return;
-    clock_gettime(CLOCK_MONOTONIC, &time_start);
     fill_global_send(&pckt, &time_loop_start, &msg_count);
     send_ping();
-    while (nbr_loop)
+    while (nbr_loop )
     {
         if (receive_ping())
             print(time_loop_start, send_data.info);
     }
-    print_end_loop(&time_start, send_data.info, msg_count);
+    print_end_loop(send_data.info, msg_count);
 }
 
 void do_all_ping(struct sockaddr_in *addr_con, char *target)

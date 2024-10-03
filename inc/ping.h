@@ -19,7 +19,6 @@
 
 
 #define PING_PKT_S 64
-#define RECV_TIMEOUT 1 // timeout for receving packet (in seconds)
 #define MAX_PINGS 100000
 
 typedef struct s_ping_pkt
@@ -51,7 +50,10 @@ typedef struct s_info
     u_int16_t id; 
     bool verbose;
     ssize_t size_recv;
-
+    bool quiet;
+    int count;
+    int recv_timeout;
+    int interval;
 } t_info;
 
 typedef struct s_global_send
@@ -75,6 +77,8 @@ void loop_handler(int signal);
 /* error.c */
 void fatal_perror(char *error);
 void fatal_error(char *error);
+void fatal_error_parsing(char *error, char c, char *str);
+void fatal_error_parsing_no_arg(char *error, char *option);
 
 /* parameters.c */
 void init_info();
@@ -83,7 +87,7 @@ void free_list(t_to_ping *start);
 
 /* print.c */
 void print(struct timespec time_loop_start, t_info *info);
-void print_end_loop(struct timespec *time_start, t_info *info, int msg_count);
+void print_end_loop(t_info *info, int msg_count);
 void print_header();
 void print_usage();
 void print_error_code(int type, int code);
