@@ -2,7 +2,7 @@
 
 void print_option()
 {
-    printf("Usage: iping [OPTION...] HOST ...\n");
+    printf("Usage: ping [OPTION...] HOST ...\n");
     printf("Send ICMP ECHO_REQUEST packets to network hosts.\n\n");
     printf("Options:\n");
     printf("  -v            verbose output\n");
@@ -271,7 +271,7 @@ void print_error_code(int type, int code)
 void print_error_usage(char c)
 {
     printf("ping: invalid option -- '%c'\n\n", c);
-    printf("Try 'ping --help' or 'iping --usage' for more information.\n");
+    printf("Try 'ping --help' or 'ping --usage' for more information.\n");
     free_list(send_data.info->start);
     exit(3);
 }

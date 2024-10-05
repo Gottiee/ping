@@ -48,7 +48,7 @@ char numeric_option(char *arg, int size_arg, int *target, bool error_on_zero)
     *target = atoi(arg);
     if (error_on_zero)
         if (!*target)
-            fatal_error("iping option value too small: 0\n");
+            fatal_error("ping option value too small: 0\n");
     return '\0';
 }
 

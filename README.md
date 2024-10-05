@@ -1,8 +1,23 @@
 # ping
 
-non-Raw socket means you can just determine Transport Layer Payload. i.e it is the OS' task to create the Transport, Network, and Data Link layer headers.
+ping uses the ICMP protocol's mandatory ECHO_REQUEST datagram to elicit an ICMP ECHO_RESPONSE from a host or gateway. ECHO_REQUEST datagrams (''pings'') have an IP and ICMP header, followed by a struct timeval and then an arbitrary number of ''pad'' bytes used to fill out the packet. 
 
-Raw socket means you can determine every section of a packet, be it header or payload. Please note that raw socket is a general word. I categorize raw socket into: Network Socket and Data-Link Socket (or alternativly L3 Socket and L2 Socket).
+## usage
+
+```sh
+Usage: ping [OPTION...] HOST ...
+Send ICMP ECHO_REQUEST packets to network hosts.
+
+Options:
+  -v            verbose output
+  -?            give this help list
+  -q            quiet output
+  -c<number>    stop after sending <number> packets
+  -ttl<number>  specify <number> as time-to-live
+  -W<number>    wait <number> seconds for response
+  -i<number>    wait <number> seconds between sending each packet
+```
+
 
 - [Leak bug getaddrinfo](https://bugs.kde.org/show_bug.cgi?id=448991)
     - [stackoverflow](https://stackoverflow.com/questions/77642568/valgrind-showing-still-reachable-memory-leak-with-getaddrinfo)
@@ -15,20 +30,18 @@ sudo valgrind --leak-check=full  --show-leak-kinds=all ./ft_ping google.com
 sudo valgrind  --suppressions=dlopen.supp ./ft_ping google.com
 ```
 
-### TODO
+## Shema
 
-- [x] gerer le ping 127.0.0.1
-    - verifier que le type de la reponse ne soit pas 8, sinon quand je loop back je recois mon propre ping. Si c'est 8 je laisse tomber le recv et je passe au suivant
-- [x] gerer les codes erreur pour afficher les bonnes erreurs
-    - fonction `print_error_code();`  ping.c -> l.150
-    - continuer la loop, mais faire une affichage particulier
-    - `From 10.34.254.254 icmp_seq=15 Time to live exceeded`
-    - [docu icmp](https://sites.uclouvain.be/SystInfo/usr/include/netinet/ip_icmp.h.html)
-- [x] modifier le code pour passer les variables depuis la variable global et pas les parametre 
-- [x] Gerer les options demandé
-- [ ] Gerer les autres options ? 
-- [x] gerer quand je recois aucun paquet l'affichage des statistique a la fin (average et var) ?
-- [ ] faire des petits shema mims
-- [ ] enlever l'options t si jamais je fais aucune autre options
+Crafting ICMP packet :
+
+![icmppacket](/img/icmp.png)
+
+### Manage error
+
+Identify error icmp packet:
+
+![icmp error](/img/icmp_problem.png)
+
+## Docu
 
 https://www.geeksforgeeks.org/ping-in-c/
