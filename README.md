@@ -13,7 +13,7 @@ Options:
   -?            give this help list
   -q            quiet output
   -c<number>    stop after sending <number> packets
-  -ttl<number>  specify <number> as time-to-live
+  --ttl<number>  specify <number> as time-to-live
   -W<number>    wait <number> seconds for response
   -i<number>    wait <number> seconds between sending each packet
 ```

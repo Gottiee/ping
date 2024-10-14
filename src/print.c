@@ -9,7 +9,7 @@ void print_option()
     printf("  -?            give this help list\n");
     printf("  -q            quiet output\n");
     printf("  -c<number>    stop after sending <number> packets\n");
-    printf("  -ttl<number>  specify <number> as time-to-live\n");
+    printf("  --ttl<number>  specify <number> as time-to-live\n");
     printf("  -W<number>    wait <number> seconds for response\n");
     printf("  -i<number>    wait <number> seconds between sending each packet\n");
     free_list(send_data.info->start);
